@@ -59,7 +59,7 @@ jobs:
             test --image steampipe:test --config /structure-tests.yaml
 
       - name: Security scan (Trivy)
-        uses: aquasecurity/trivy-action@dc1e46d6ead2bb8c9d76f98a2e0a3dcd1e1c1a18 # 0.28.0
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           image-ref: steampipe:test
           format: sarif
@@ -88,7 +88,7 @@ jobs:
         id: version
         run: |
           git fetch origin ${{ github.base_ref }} --depth=1
-          OLD_VERSION=$(git show origin/${{ github.base_ref }}:Dockerfile | grep -oP 'ARG STEAMPIPE_VERSION=\K.*')
+          OLD_VERSION=$(git show origin/${{ github.base_ref }}:Dockerfile 2>/dev/null | grep -oP 'ARG STEAMPIPE_VERSION=\K.*' || echo "")
           NEW_VERSION=$(grep -oP 'ARG STEAMPIPE_VERSION=\K.*' Dockerfile)
           echo "old=$OLD_VERSION" >> "$GITHUB_OUTPUT"
           echo "new=$NEW_VERSION" >> "$GITHUB_OUTPUT"
