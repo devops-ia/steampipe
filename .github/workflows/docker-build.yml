@@ -1,0 +1,282 @@
+name: Build and Push Docker Image
+
+env:
+  DOCKERHUB_USER: devopsiaci
+  DOCKERHUB_REPO: steampipe
+  GHCR_REGISTRY: ghcr.io
+  GHCR_REPO: ${{ github.repository }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
+        with:
+          dockerfile: Dockerfile
+          config: .hadolint.yaml
+
+      - name: Unit tests
+        run: |
+          pip install -r tests/requirements.txt
+          python3 -m pytest tests/ \
+            --cov=compare_snapshots \
+            --cov-report=term-missing \
+            --cov-fail-under=90
+
+      - name: Build test image
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          context: .
+          load: true
+          tags: steampipe:test
+
+      - name: Smoke test
+        run: |
+          docker run --rm steampipe:test steampipe --version
+
+      - name: Container structure tests
+        run: |
+          docker run --rm \
+            -v "$PWD/structure-tests.yaml:/structure-tests.yaml:ro" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            gcr.io/gcp-runtimes/container-structure-test:latest \
+            test --image steampipe:test --config /structure-tests.yaml
+
+      - name: Security scan (Trivy)
+        uses: aquasecurity/trivy-action@dc1e46d6ead2bb8c9d76f98a2e0a3dcd1e1c1a18 # 0.28.0
+        with:
+          image-ref: steampipe:test
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: "1"
+          severity: CRITICAL
+          ignore-unfixed: true
+
+      - name: Upload Trivy SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@ff0a06e83cb2de871e5a09832bc6a81e7276941f # v3.28.18
+        with:
+          sarif_file: trivy-results.sarif
+
+  behavior-check:
+    name: Behavior Check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Detect version change
+        id: version
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          OLD_VERSION=$(git show origin/${{ github.base_ref }}:Dockerfile | grep -oP 'ARG STEAMPIPE_VERSION=\K.*')
+          NEW_VERSION=$(grep -oP 'ARG STEAMPIPE_VERSION=\K.*' Dockerfile)
+          echo "old=$OLD_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Version change detected: $OLD_VERSION → $NEW_VERSION"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No version change"
+          fi
+
+      - name: Build test image
+        if: steps.version.outputs.changed == 'true'
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          context: .
+          load: true
+          tags: steampipe:test
+
+      - name: Extract CLI snapshot
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          docker run --rm --network none \
+            -v "$PWD/scripts:/scripts:ro" \
+            steampipe:test bash /scripts/extract-cli-snapshot.sh > /tmp/cli-snapshot-new.json
+
+      - name: Extract env vars from upstream source
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          ENV_VARS=$(bash scripts/extract-env-vars.sh "${{ steps.version.outputs.new }}")
+          jq --argjson env_vars "$ENV_VARS" '. + {env_vars: $env_vars}' /tmp/cli-snapshot-new.json > /tmp/cli-snapshot-full.json
+
+      - name: Compare snapshots
+        id: diff
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          python3 scripts/compare_snapshots.py \
+            cli-snapshot.json /tmp/cli-snapshot-full.json \
+            --output-md /tmp/behavior-diff.md \
+            --output-json /tmp/behavior-diff.json \
+            && echo "has_changes=false" >> "$GITHUB_OUTPUT" \
+            || echo "has_changes=true" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR
+        if: steps.version.outputs.changed == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            const md = fs.readFileSync('/tmp/behavior-diff.md', 'utf8');
+            const marker = '<!-- behavior-check -->';
+
+            // Find and update existing comment, or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+
+            const body = `${marker}\n${md}`;
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  release:
+    name: Release
+    needs: [test]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      artifact-metadata: write
+      contents: write
+      id-token: write
+      issues: write
+      packages: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Semantic Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90 # v6.0.0
+        with:
+          tag_format: 'v${version}'
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Docker metadata
+        id: meta
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        with:
+          images: |
+            ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPO }}
+            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
+          labels: |
+            org.opencontainers.image.maintainer='amartingarcia,ialejandro'
+            org.opencontainers.image.title='Steampipe'
+            org.opencontainers.image.description='Steampipe CLI — Use SQL to query cloud APIs'
+            org.opencontainers.image.vendor='devops-ia'
+          tags: |
+            type=raw,value=${{ steps.semantic.outputs.new_release_git_tag }}
+
+      - name: Set up QEMU
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+
+      - name: Set up Docker Buildx
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Cache Docker layers
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: "[DOCKERHUB] Log in"
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: "[GHCR] Log in"
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: push
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          context: .
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          sbom: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: "[DOCKERHUB] Update registry description"
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPO }}
+
+      - name: "[GHCR] Generate artifact attestation"
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-name: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Move Docker cache
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache

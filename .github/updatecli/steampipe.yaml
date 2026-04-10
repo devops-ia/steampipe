@@ -1,0 +1,23 @@
+---
+name: Bump Steampipe version
+
+sources:
+  steampipe:
+    kind: githubRelease
+    spec:
+      owner: turbot
+      repository: steampipe
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      versionFilter:
+        kind: semver
+        pattern: ">=2.0.0"
+
+targets:
+  dockerfile:
+    name: "Update Steampipe version in Dockerfile"
+    kind: file
+    sourceid: steampipe
+    spec:
+      file: Dockerfile
+      matchpattern: 'ARG STEAMPIPE_VERSION=.*'
+      replacepattern: 'ARG STEAMPIPE_VERSION={{ source "steampipe" }}'

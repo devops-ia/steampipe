@@ -1,0 +1,24 @@
+services:
+  steampipe:
+    image: ghcr.io/devops-ia/steampipe:2.4.1
+    container_name: steampipe
+    command: steampipe service start --foreground --database-listen network
+    ports:
+      - "9193:9193"
+    volumes:
+      - steampipe-data:/home/steampipe/.steampipe
+    environment:
+      STEAMPIPE_DATABASE_PASSWORD: steampipe
+      STEAMPIPE_UPDATE_CHECK: "false"
+      STEAMPIPE_TELEMETRY: none
+      STEAMPIPE_LOG_LEVEL: warn
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 9193 -U steampipe"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  steampipe-data:

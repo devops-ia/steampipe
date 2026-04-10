@@ -1,0 +1,65 @@
+schemaVersion: "2.0.0"
+
+# Validate binary
+fileExistenceTests:
+  - name: "steampipe binary exists"
+    path: "/usr/local/bin/steampipe"
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+  - name: "steampipe home dir exists"
+    path: "/home/steampipe"
+    shouldExist: true
+
+  - name: "steampipe install dir exists"
+    path: "/home/steampipe/.steampipe"
+    shouldExist: true
+
+  - name: "workspace dir exists"
+    path: "/workspace"
+    shouldExist: true
+
+# Validate binary runs
+fileContentTests: []
+
+# Validate ENV vars set in Dockerfile
+metadataTest:
+  env:
+    - key: STEAMPIPE_UPDATE_CHECK
+      value: "false"
+    - key: STEAMPIPE_TELEMETRY
+      value: "none"
+    - key: STEAMPIPE_INSTALL_DIR
+      value: "/home/steampipe/.steampipe"
+    - key: STEAMPIPE_MOD_LOCATION
+      value: "/workspace"
+  labels:
+    - key: "org.opencontainers.image.title"
+      value: "Steampipe"
+    - key: "org.opencontainers.image.vendor"
+      value: "devops-ia"
+    - key: "org.opencontainers.image.source"
+      value: "https://github.com/devops-ia/steampipe"
+  exposedPorts:
+    - "9193"
+  cmd:
+    - "steampipe"
+    - "service"
+    - "start"
+    - "--foreground"
+  workdir: "/home/steampipe"
+  user: "9193"
+
+# Validate binary executes correctly
+commandTests:
+  - name: "steampipe --version returns version string"
+    command: "steampipe"
+    args: ["--version"]
+    expectedOutput:
+      - "Steampipe v[0-9]+\\.[0-9]+\\.[0-9]+"
+    exitCode: 0
+
+  - name: "steampipe --help exits 0"
+    command: "steampipe"
+    args: ["--help"]
+    exitCode: 0
