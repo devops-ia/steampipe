@@ -1,6 +1,19 @@
 ---
 name: Bump Steampipe version
 
+scms:
+  github:
+    kind: github
+    spec:
+      user: '{{ requiredEnv "GITHUB_ACTOR" }}'
+      email: '{{ requiredEnv "GITHUB_ACTOR" }}@users.noreply.github.com'
+      owner: devops-ia
+      repository: steampipe
+      token: '{{ requiredEnv "GITHUB_TOKEN" }}'
+      branch: main
+      commitmessage:
+        title: 'chore: bump steampipe to {{ source "steampipe" }}'
+
 sources:
   steampipe:
     kind: githubRelease
@@ -16,8 +29,18 @@ targets:
   dockerfile:
     name: "Update Steampipe version in Dockerfile"
     kind: file
+    scmid: github
     sourceid: steampipe
     spec:
       file: Dockerfile
       matchpattern: 'ARG STEAMPIPE_VERSION=.*'
       replacepattern: 'ARG STEAMPIPE_VERSION={{ source "steampipe" }}'
+
+actions:
+  pr:
+    kind: github/pullrequest
+    scmid: github
+    title: 'chore: bump steampipe to {{ source "steampipe" }}'
+    spec:
+      labels:
+        - dependencies
