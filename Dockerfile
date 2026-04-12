@@ -10,8 +10,10 @@ LABEL org.opencontainers.image.source="https://github.com/devops-ia/steampipe"
 LABEL org.opencontainers.image.vendor="devops-ia"
 LABEL org.opencontainers.image.url="https://steampipe.io"
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates curl && \
+    apt-get install -y --no-install-recommends ca-certificates curl jq && \
     rm -rf /var/lib/apt/lists/*
 
 RUN curl -fsSL "https://github.com/turbot/steampipe/releases/download/v${STEAMPIPE_VERSION}/steampipe_linux_${TARGETARCH}.tar.gz" \
