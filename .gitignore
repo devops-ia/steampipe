@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+.coverage
+
+__pycache__/
+
+# OpenSpec — local workflow tooling, not part of the image
+openspec/
+OPENSPEC-GUIDE.md
+.github/prompts/
+.github/skills/

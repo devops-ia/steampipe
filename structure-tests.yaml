@@ -1,0 +1,80 @@
+schemaVersion: "2.0.0"
+
+# Validate binary
+fileExistenceTests:
+  - name: "steampipe binary exists"
+    path: "/usr/local/bin/steampipe"
+    shouldExist: true
+    permissions: "-rwxr-xr-x"
+
+  - name: "steampipe home dir exists"
+    path: "/home/steampipe"
+    shouldExist: true
+
+  - name: "steampipe install dir exists"
+    path: "/home/steampipe/.steampipe"
+    shouldExist: true
+
+  - name: "workspace dir exists"
+    path: "/workspace"
+    shouldExist: true
+
+# Validate binary runs
+fileContentTests: []
+
+# Validate image metadata
+metadataTest:
+  labels:
+    - key: "org.opencontainers.image.title"
+      value: "Steampipe"
+    - key: "org.opencontainers.image.vendor"
+      value: "devops-ia"
+    - key: "org.opencontainers.image.source"
+      value: "https://github.com/devops-ia/steampipe"
+  exposedPorts:
+    - "9193"
+  cmd:
+    - "steampipe"
+    - "service"
+    - "start"
+    - "--foreground"
+  workdir: "/home/steampipe"
+  user: "9193"
+
+# Validate ENV vars and binary behavior
+commandTests:
+  - name: "STEAMPIPE_UPDATE_CHECK is false"
+    command: "sh"
+    args: ["-c", "printenv STEAMPIPE_UPDATE_CHECK"]
+    expectedOutput: ["false"]
+    exitCode: 0
+
+  - name: "STEAMPIPE_TELEMETRY is none"
+    command: "sh"
+    args: ["-c", "printenv STEAMPIPE_TELEMETRY"]
+    expectedOutput: ["none"]
+    exitCode: 0
+
+  - name: "STEAMPIPE_INSTALL_DIR is set"
+    command: "sh"
+    args: ["-c", "printenv STEAMPIPE_INSTALL_DIR"]
+    expectedOutput: ["/home/steampipe/.steampipe"]
+    exitCode: 0
+
+  - name: "STEAMPIPE_LOG_LEVEL is warn"
+    command: "sh"
+    args: ["-c", "printenv STEAMPIPE_LOG_LEVEL"]
+    expectedOutput: ["warn"]
+    exitCode: 0
+
+  - name: "steampipe --version returns version string"
+    command: "steampipe"
+    args: ["--version"]
+    expectedOutput:
+      - "Steampipe v[0-9]+\\.[0-9]+\\.[0-9]+"
+    exitCode: 0
+
+  - name: "steampipe --help exits 0"
+    command: "steampipe"
+    args: ["--help"]
+    exitCode: 0

@@ -1,0 +1,9 @@
+# Trivy configuration
+# https://trivy.dev/docs/references/configuration/config-file/
+
+scan:
+  # Skip the steampipe binary from vulnerability scanning.
+  # CVEs in the Go binary are upstream Turbot's responsibility;
+  # we cannot patch a pre-compiled third-party binary.
+  skip-files:
+    - usr/local/bin/steampipe
