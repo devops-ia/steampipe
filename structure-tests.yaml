@@ -23,16 +23,21 @@ fileExistenceTests:
 fileContentTests: []
 
 # Validate ENV vars set in Dockerfile
+envVariableTests:
+  - name: "STEAMPIPE_UPDATE_CHECK is false"
+    key: STEAMPIPE_UPDATE_CHECK
+    value: "false"
+  - name: "STEAMPIPE_TELEMETRY is none"
+    key: STEAMPIPE_TELEMETRY
+    value: "none"
+  - name: "STEAMPIPE_INSTALL_DIR is set"
+    key: STEAMPIPE_INSTALL_DIR
+    value: "/home/steampipe/.steampipe"
+  - name: "STEAMPIPE_LOG_LEVEL is warn"
+    key: STEAMPIPE_LOG_LEVEL
+    value: "warn"
+
 metadataTest:
-  env:
-    - key: STEAMPIPE_UPDATE_CHECK
-      value: "false"
-    - key: STEAMPIPE_TELEMETRY
-      value: "none"
-    - key: STEAMPIPE_INSTALL_DIR
-      value: "/home/steampipe/.steampipe"
-    - key: STEAMPIPE_MOD_LOCATION
-      value: "/workspace"
   labels:
     - key: "org.opencontainers.image.title"
       value: "Steampipe"
