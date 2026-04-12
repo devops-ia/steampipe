@@ -176,9 +176,7 @@ jobs:
       artifact-metadata: write
       contents: write
       id-token: write
-      issues: write
       packages: write
-      pull-requests: write
 
     steps:
       - name: Checkout
@@ -186,20 +184,45 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Semantic Release
-        id: semantic
-        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90 # v6.0.0
-        with:
-          tag_format: 'v${version}'
-          extra_plugins: |
-            @semantic-release/changelog
-            @semantic-release/git
+      - name: Get Steampipe version
+        id: version
+        run: |
+          VERSION=$(grep -oP 'ARG STEAMPIPE_VERSION=\K.*' Dockerfile)
+          TAG="v${VERSION}"
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          if git rev-parse "${TAG}" >/dev/null 2>&1; then
+            echo "is_new=false" >> "${GITHUB_OUTPUT}"
+            echo "Tag ${TAG} already exists — skipping release"
+          else
+            echo "is_new=true" >> "${GITHUB_OUTPUT}"
+            echo "New version detected: ${TAG}"
+          fi
+
+      - name: Create release tag
+        if: steps.version.outputs.is_new == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.version.outputs.tag }}" \
+            -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.is_new == 'true'
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --generate-notes \
+            --latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set Docker metadata
         id: meta
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: |
@@ -211,18 +234,18 @@ jobs:
             org.opencontainers.image.description='Steampipe CLI — Use SQL to query cloud APIs'
             org.opencontainers.image.vendor='devops-ia'
           tags: |
-            type=raw,value=${{ steps.semantic.outputs.new_release_git_tag }}
+            type=raw,value=${{ steps.version.outputs.tag }}
 
       - name: Set up QEMU
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
         uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
 
       - name: Set up Docker Buildx
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Cache Docker layers
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
         uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: /tmp/.buildx-cache
@@ -231,14 +254,15 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: "[DOCKERHUB] Log in"
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: "[GHCR] Log in"
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
+        continue-on-error: true
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ${{ env.GHCR_REGISTRY }}
@@ -247,7 +271,7 @@ jobs:
 
       - name: Build and push Docker image
         id: push
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           cache-from: type=local,src=/tmp/.buildx-cache
@@ -260,7 +284,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
 
       - name: "[DOCKERHUB] Update registry description"
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -268,7 +292,8 @@ jobs:
           repository: ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPO }}
 
       - name: "[GHCR] Generate artifact attestation"
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
+        continue-on-error: true
         uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-name: ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPO }}
@@ -276,7 +301,7 @@ jobs:
           push-to-registry: true
 
       - name: Move Docker cache
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: steps.version.outputs.is_new == 'true'
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
