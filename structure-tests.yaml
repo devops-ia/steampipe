@@ -22,21 +22,7 @@ fileExistenceTests:
 # Validate binary runs
 fileContentTests: []
 
-# Validate ENV vars set in Dockerfile
-envVariableTests:
-  - name: "STEAMPIPE_UPDATE_CHECK is false"
-    key: STEAMPIPE_UPDATE_CHECK
-    value: "false"
-  - name: "STEAMPIPE_TELEMETRY is none"
-    key: STEAMPIPE_TELEMETRY
-    value: "none"
-  - name: "STEAMPIPE_INSTALL_DIR is set"
-    key: STEAMPIPE_INSTALL_DIR
-    value: "/home/steampipe/.steampipe"
-  - name: "STEAMPIPE_LOG_LEVEL is warn"
-    key: STEAMPIPE_LOG_LEVEL
-    value: "warn"
-
+# Validate image metadata
 metadataTest:
   labels:
     - key: "org.opencontainers.image.title"
@@ -55,8 +41,32 @@ metadataTest:
   workdir: "/home/steampipe"
   user: "9193"
 
-# Validate binary executes correctly
+# Validate ENV vars and binary behavior
 commandTests:
+  - name: "STEAMPIPE_UPDATE_CHECK is false"
+    command: "sh"
+    args: ["-c", "printenv STEAMPIPE_UPDATE_CHECK"]
+    expectedOutput: ["false"]
+    exitCode: 0
+
+  - name: "STEAMPIPE_TELEMETRY is none"
+    command: "sh"
+    args: ["-c", "printenv STEAMPIPE_TELEMETRY"]
+    expectedOutput: ["none"]
+    exitCode: 0
+
+  - name: "STEAMPIPE_INSTALL_DIR is set"
+    command: "sh"
+    args: ["-c", "printenv STEAMPIPE_INSTALL_DIR"]
+    expectedOutput: ["/home/steampipe/.steampipe"]
+    exitCode: 0
+
+  - name: "STEAMPIPE_LOG_LEVEL is warn"
+    command: "sh"
+    args: ["-c", "printenv STEAMPIPE_LOG_LEVEL"]
+    expectedOutput: ["warn"]
+    exitCode: 0
+
   - name: "steampipe --version returns version string"
     command: "steampipe"
     args: ["--version"]
