@@ -2,6 +2,14 @@
 
 This image is designed for the [helm-steampipe](https://github.com/devops-ia/helm-steampipe) Helm chart but also works with plain Kubernetes manifests.
 
+**Helm chart docs:**
+- [Installation & GitOps](https://github.com/devops-ia/helm-steampipe/blob/main/docs/installation.md) — OCI, ArgoCD, Flux, RBAC
+- [Plugin configuration](https://github.com/devops-ia/helm-steampipe/blob/main/docs/plugins.md) — AWS/GCP/Azure/K8s .spc examples
+- [Security & Workload Identity](https://github.com/devops-ia/helm-steampipe/blob/main/docs/security.md) — IRSA, GCP WI, Azure WI, network policies
+- [Integrations](https://github.com/devops-ia/helm-steampipe/blob/main/docs/integrations.md) — Grafana, Prometheus, dbt, Python/Node
+- [SQL Queries](https://github.com/devops-ia/helm-steampipe/blob/main/docs/queries.md) — AWS, GCP, Azure, Kubernetes, multi-cloud
+- [Troubleshooting](https://github.com/devops-ia/helm-steampipe/blob/main/docs/troubleshooting.md) — CrashLoopBackOff, OOM, ingress
+
 ## Install with Helm
 
 ```bash
