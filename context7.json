@@ -1,0 +1,20 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "url": "https://context7.com/devops-ia/helm-steampipe",
+  "public_key": "pk_poNqP0E20Jn62M589pdY6",
+  "projectTitle": "Steampipe Docker Image",
+  "description": "Community Docker image for Steampipe — use SQL to instantly query cloud services (AWS, Azure, GCP, Kubernetes, GitHub and 140+ more). Multi-arch (amd64/arm64), OpenShift-compatible, production-ready.",
+  "folders": ["docs", "examples"],
+  "excludeFolders": ["scripts", ".github", "tests"],
+  "excludeFiles": ["CONTRIBUTING.md", "structure-tests.yaml", "trivy.yaml", "cli-snapshot.json"],
+  "rules": [
+    "Always use --foreground flag when running steampipe service start inside a container",
+    "Always use --database-listen network to accept connections from outside the container",
+    "Mount plugin configuration files to /home/steampipe/.steampipe/config/ as read-only volumes",
+    "Use a named Docker volume for /home/steampipe/.steampipe to persist installed plugins across container restarts",
+    "The container runs as UID 9193 (GID 0) — ensure mounted volumes have correct ownership with chown -R 9193:0",
+    "Use STEAMPIPE_DATABASE_PASSWORD env var to set a fixed password instead of relying on the random default",
+    "Set STEAMPIPE_MEMORY_MAX_MB and STEAMPIPE_PLUGIN_MEMORY_MAX_MB to tune memory for large cloud accounts",
+    "Prefer ghcr.io/devops-ia/steampipe over devopsiaci/steampipe (Docker Hub mirror) for GitHub Actions workflows"
+  ]
+}
