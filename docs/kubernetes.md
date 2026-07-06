@@ -18,7 +18,7 @@ helm repo update
 
 helm install steampipe devops-ia/steampipe \
   --set image.repository=ghcr.io/devops-ia/steampipe \
-  --set image.tag=2.4.1 \
+  --set image.tag=v2.4.1 \
   --set bbdd.enabled=true \
   --set bbdd.listen=network \
   --namespace steampipe \
@@ -39,7 +39,7 @@ helm upgrade steampipe devops-ia/steampipe \
 # values.yaml
 image:
   repository: ghcr.io/devops-ia/steampipe
-  tag: "2.4.1"
+  tag: "v2.4.1"
 
 bbdd:
   enabled: true

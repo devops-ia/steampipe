@@ -1,6 +1,6 @@
 services:
   steampipe:
-    image: ghcr.io/devops-ia/steampipe:2.4.1
+    image: ghcr.io/devops-ia/steampipe:v2.4.1
     container_name: steampipe
     command: steampipe service start --foreground --database-listen network
     ports:

@@ -56,8 +56,10 @@ docker run --rm \
 Releases are **fully automated** — do not bump versions manually.
 
 1. [updatecli](https://www.updatecli.io/) detects new Steampipe releases and opens a PR updating `ARG STEAMPIPE_VERSION` in the `Dockerfile`.
-2. The PR CI runs all tests.
-3. On merge to `main`, [semantic-release](https://semantic-release.gitbook.io/) reads conventional commits, bumps the chart version, and publishes to GHCR and Docker Hub automatically.
+2. The PR CI runs all tests and posts a CLI behavior diff (`cli-snapshot.json`) as a PR comment.
+3. On merge to `main`, `docker-build.yml` detects the version change, creates the `v<version>` git tag, publishes a GitHub release, and pushes the multi-arch image to GHCR and Docker Hub — all directly in that workflow.
+
+> Note: `package.json` still carries a `semantic-release` configuration, but no workflow currently invokes it — the actual tagging/release logic lives in `docker-build.yml` as described above.
 
 ## Commit message format
 

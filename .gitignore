@@ -14,3 +14,5 @@ openspec/
 OPENSPEC-GUIDE.md
 .github/prompts/
 .github/skills/
+# Local AI runtime state
+.atl/

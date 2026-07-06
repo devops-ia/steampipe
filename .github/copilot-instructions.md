@@ -92,7 +92,7 @@ docker run --rm \
 
 ## Commit Convention
 
-Uses [Conventional Commits](https://www.conventionalcommits.org/). semantic-release reads commits on merge to `main` to bump versions automatically.
+Uses [Conventional Commits](https://www.conventionalcommits.org/). `docker-build.yml` detects the `ARG STEAMPIPE_VERSION` bump on merge to `main`, tags `v<version>`, and publishes the release directly (no `semantic-release` invocation, despite the leftover config in `package.json`).
 
 | Type | When |
 |------|------|
@@ -107,7 +107,7 @@ Uses [Conventional Commits](https://www.conventionalcommits.org/). semantic-rele
 - **UID 9193, GID 0** — OpenShift-compatible (arbitrary UID with group 0 permissions)
 - **`structure-tests.yaml` uses `commandTests` with `printenv`** for env var assertions (not `metadataTest.env` or `envVariableTests` — those aren't supported by `container-structure-test`)
 - **Dockerfile requires `SHELL ["/bin/bash", "-o", "pipefail", "-c"]`** before any `RUN` with pipes, to satisfy hadolint DL4006
-- **Version is never manually bumped** — updatecli opens the PR; semantic-release tags the release
+- **Version is never manually bumped** — updatecli opens the PR; `docker-build.yml` tags and releases directly on merge
 
 ## Documentation Format
 
