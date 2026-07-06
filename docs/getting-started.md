@@ -9,10 +9,10 @@
 
 ```bash
 # GitHub Container Registry (recommended)
-docker pull ghcr.io/devops-ia/steampipe:2.4.1
+docker pull ghcr.io/devops-ia/steampipe:v2.4.1
 
 # Docker Hub
-docker pull devopsiaci/steampipe:2.4.1
+docker pull devopsiaci/steampipe:v2.4.1
 ```
 
 ## Run as a query shell
@@ -21,7 +21,7 @@ Execute a one-off interactive SQL session:
 
 ```bash
 docker run -it --rm \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe query
 ```
 
@@ -32,7 +32,7 @@ Start Steampipe as a persistent background service accessible on port 9193:
 ```bash
 docker run -d --name steampipe \
   -p 9193:9193 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -55,7 +55,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v steampipe-data:/home/steampipe/.steampipe \
   -e STEAMPIPE_DATABASE_PASSWORD=mypassword \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 # Install the AWS plugin

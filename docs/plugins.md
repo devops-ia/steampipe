@@ -62,7 +62,7 @@ docker run -d --name steampipe \
   -e AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE \
   -e AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
   -e AWS_DEFAULT_REGION=us-east-1 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -94,7 +94,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$HOME/.aws:/home/steampipe/.aws:ro" \
   -v "$PWD/aws.spc:/home/steampipe/.steampipe/config/aws.spc:ro" \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -123,7 +123,7 @@ docker run -d --name steampipe \
   -e AZURE_TENANT_ID=00000000-0000-0000-0000-000000000000 \
   -e AZURE_CLIENT_ID=00000000-0000-0000-0000-000000000000 \
   -e AZURE_CLIENT_SECRET=your-client-secret \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -144,7 +144,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$PWD/gcp.spc:/home/steampipe/.steampipe/config/gcp.spc:ro" \
   -v "$PWD/service-account.json:/home/steampipe/.config/gcloud/application_default_credentials.json:ro" \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -174,7 +174,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$HOME/.kube:/home/steampipe/.kube:ro" \
   -v "$PWD/kubernetes.spc:/home/steampipe/.steampipe/config/kubernetes.spc:ro" \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -193,7 +193,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$PWD/github.spc:/home/steampipe/.steampipe/config/github.spc:ro" \
   -e GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -217,7 +217,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$PWD:/workspace" \
   -v "$PWD/terraform.spc:/home/steampipe/.steampipe/config/terraform.spc:ro" \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -241,7 +241,7 @@ docker volume create steampipe-data
 docker run -d --name steampipe \
   -p 9193:9193 \
   -v steampipe-data:/home/steampipe/.steampipe \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 # Install plugins — they persist in steampipe-data volume
@@ -253,7 +253,7 @@ docker exec steampipe steampipe plugin install aws azure gcp
 For faster cold starts, build a custom image with plugins pre-installed:
 
 ```dockerfile
-FROM ghcr.io/devops-ia/steampipe:2.4.1
+FROM ghcr.io/devops-ia/steampipe:v2.4.1
 
 RUN steampipe plugin install aws azure gcp kubernetes
 ```
