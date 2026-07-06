@@ -12,9 +12,12 @@ The image is a thin wrapper: it downloads the Steampipe binary, sets up the runt
 Dockerfile          → builds the image (ARG STEAMPIPE_VERSION controls version)
 README.md           → documents flags, env vars, quickstart, Kubernetes notes
 cli-snapshot.json   → machine-readable snapshot of CLI behavior (auto-generated)
+structure-tests.yaml → container-structure-test assertions (binary, dirs, env vars, CMD)
 scripts/            → extraction and comparison tools (do not modify)
 package.json        → semantic-release config (do not modify)
 ```
+
+`cli-snapshot.json` captures the CLI flags/env vars surface area. On each PR, `scripts/compare_snapshots.py` diffs the new snapshot against the stored one and posts the delta as a PR comment — this is how behavioral changes are surfaced for review.
 
 ## When Upstream Releases a New Version
 
@@ -35,6 +38,8 @@ package.json        → semantic-release config (do not modify)
 
 - `README.md` — flag tables, env var tables, examples
 - `Dockerfile` — ENV defaults, HEALTHCHECK, EXPOSE
+- `docs/` — topic-specific documentation pages
+- `structure-tests.yaml` — when new ENV vars or CMD changes land
 
 ## Files You MUST NOT Modify
 
@@ -44,32 +49,76 @@ package.json        → semantic-release config (do not modify)
 - `scripts/` — extraction tools
 - `LICENSE`
 
-## How to Build and Test
+## Build and Test Commands
 
 ```bash
-# Build
-docker build -t steampipe:test .
+# Build (default version from Dockerfile ARG)
+docker build -t steampipe:dev .
+
+# Build with specific version
+docker build --build-arg STEAMPIPE_VERSION=2.4.1 -t steampipe:dev .
 
 # Smoke test
-docker run --rm steampipe:test steampipe --version
+docker run --rm steampipe:dev steampipe --version
 
 # Service test
-docker run --rm -d --name sp-test steampipe:test steampipe service start --foreground --database-listen network
+docker run --rm -d --name sp-test steampipe:dev steampipe service start --foreground --database-listen network
 sleep 10
 docker exec sp-test bash -c 'echo > /dev/tcp/localhost/9193' && echo "OK"
 docker stop sp-test
+
+# Unit tests for the snapshot comparison script (no Docker required)
+pip install -r tests/requirements.txt
+python3 -m pytest tests/ --cov=compare_snapshots --cov-report=term-missing
+
+# Run a single test
+python3 -m pytest tests/test_compare_snapshots.py::test_name -v
+
+# Dockerfile lint
+docker run --rm -i hadolint/hadolint < Dockerfile
+
+# Container structure tests (requires built image)
+docker run --rm \
+  -v "$PWD/structure-tests.yaml:/structure-tests.yaml:ro" \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  gcr.io/gcp-runtimes/container-structure-test:latest \
+  test --image steampipe:dev --config /structure-tests.yaml
+
+# Security scan
+docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy image --severity CRITICAL --ignore-unfixed steampipe:dev
 ```
+
+## Commit Convention
+
+Uses [Conventional Commits](https://www.conventionalcommits.org/). semantic-release reads commits on merge to `main` to bump versions automatically.
+
+| Type | When |
+|------|------|
+| `feat` | New feature or capability |
+| `fix` | Bug fix |
+| `chore` | Maintenance (version bumps, CI tweaks) |
+| `docs` | Documentation only |
+| `refactor` | Code restructure without behaviour change |
+
+## Key Conventions
+
+- **UID 9193, GID 0** — OpenShift-compatible (arbitrary UID with group 0 permissions)
+- **`structure-tests.yaml` uses `commandTests` with `printenv`** for env var assertions (not `metadataTest.env` or `envVariableTests` — those aren't supported by `container-structure-test`)
+- **Dockerfile requires `SHELL ["/bin/bash", "-o", "pipefail", "-c"]`** before any `RUN` with pipes, to satisfy hadolint DL4006
+- **Version is never manually bumped** — updatecli opens the PR; semantic-release tags the release
 
 ## Documentation Format
 
-Flag tables use this format:
+Flag tables:
 ```markdown
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--foreground` | Run in foreground (required for containers) | — |
 ```
 
-Env var tables use this format:
+Env var tables:
 ```markdown
 | Variable | Image default | Description |
 |----------|--------------|-------------|
