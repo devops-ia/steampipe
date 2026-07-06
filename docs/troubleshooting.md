@@ -8,10 +8,10 @@
 
 ```bash
 # Wrong — exits after starting the background daemon
-docker run ghcr.io/devops-ia/steampipe:2.4.1 steampipe service start
+docker run ghcr.io/devops-ia/steampipe:v2.4.1 steampipe service start
 
 # Correct — blocks in foreground (required for containers)
-docker run ghcr.io/devops-ia/steampipe:2.4.1 \
+docker run ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -26,7 +26,7 @@ docker run ghcr.io/devops-ia/steampipe:2.4.1 \
 ```bash
 # Must include --database-listen network to accept external connections
 docker run -d -p 9193:9193 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -61,7 +61,7 @@ docker volume create steampipe-data
 docker run -d --name steampipe \
   -p 9193:9193 \
   -v steampipe-data:/home/steampipe/.steampipe \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 # Plugins installed now survive container recreation
@@ -110,7 +110,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -e STEAMPIPE_MEMORY_MAX_MB=3072 \
   -e STEAMPIPE_PLUGIN_MEMORY_MAX_MB=2048 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -155,7 +155,7 @@ Enable detailed logging to diagnose unexpected behaviour:
 docker run -d --name steampipe \
   -p 9193:9193 \
   -e STEAMPIPE_LOG_LEVEL=debug \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 docker logs -f steampipe

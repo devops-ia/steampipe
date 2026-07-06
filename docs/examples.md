@@ -362,6 +362,6 @@ Using Docker directly as a cron job:
 docker run --rm \
   -v "$HOME/.aws:/home/steampipe/.aws:ro" \
   -v "$PWD/aws.spc:/home/steampipe/.steampipe/config/aws.spc:ro" \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe query "select name, region from aws_s3_bucket" --output json
 ```

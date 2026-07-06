@@ -12,7 +12,7 @@ Connect Grafana to Steampipe using the built-in PostgreSQL datasource.
 # docker-compose-grafana.yml
 services:
   steampipe:
-    image: ghcr.io/devops-ia/steampipe:2.4.1
+    image: ghcr.io/devops-ia/steampipe:v2.4.1
     container_name: steampipe
     command: steampipe service start --foreground --database-listen network
     ports:
@@ -72,7 +72,7 @@ GROUP BY instance_state
 # docker-compose-superset.yml
 services:
   steampipe:
-    image: ghcr.io/devops-ia/steampipe:2.4.1
+    image: ghcr.io/devops-ia/steampipe:v2.4.1
     command: steampipe service start --foreground --database-listen network
     ports:
       - "9193:9193"
@@ -110,7 +110,7 @@ postgresql+psycopg2://steampipe:steampipe@steampipe:9193/steampipe
 # docker-compose-metabase.yml
 services:
   steampipe:
-    image: ghcr.io/devops-ia/steampipe:2.4.1
+    image: ghcr.io/devops-ia/steampipe:v2.4.1
     command: steampipe service start --foreground --database-listen network
     ports:
       - "9193:9193"
@@ -191,7 +191,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v steampipe-data:/home/steampipe/.steampipe \
   -e STEAMPIPE_DATABASE_PASSWORD=steampipe \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 # Run dbt

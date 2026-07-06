@@ -17,7 +17,7 @@ Community Docker image for [Steampipe](https://steampipe.io) — use SQL to inst
 # Run Steampipe as a service (PostgreSQL endpoint on port 9193)
 docker run -d --name steampipe \
   -p 9193:9193 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 # Install a plugin
@@ -41,10 +41,10 @@ psql -h localhost -p 9193 -U steampipe -d steampipe
 
 ```bash
 # GitHub Container Registry
-docker pull ghcr.io/devops-ia/steampipe:2.4.1
+docker pull ghcr.io/devops-ia/steampipe:v2.4.1
 
 # Docker Hub
-docker pull devopsiaci/steampipe:2.4.1
+docker pull devopsiaci/steampipe:v2.4.1
 ```
 
 ## Documentation

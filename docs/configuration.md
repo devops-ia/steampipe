@@ -29,7 +29,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -e STEAMPIPE_DATABASE_PASSWORD=supersecret \
   -e STEAMPIPE_DATABASE_LISTEN=network \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -57,7 +57,7 @@ docker run -d --name steampipe \
   -e AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE \
   -e AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY \
   -e AWS_DEFAULT_REGION=us-east-1 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -68,7 +68,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$HOME/.aws:/home/steampipe/.aws:ro" \
   -v "$PWD/aws.spc:/home/steampipe/.steampipe/config/aws.spc:ro" \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -86,7 +86,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$PWD/gcp.spc:/home/steampipe/.steampipe/config/gcp.spc:ro" \
   -v "$PWD/service-account.json:/home/steampipe/.config/gcloud/application_default_credentials.json:ro" \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -108,7 +108,7 @@ connection "azure" {
 docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$PWD/azure.spc:/home/steampipe/.steampipe/config/azure.spc:ro" \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 docker exec steampipe steampipe plugin install azure
@@ -124,7 +124,7 @@ docker run -d --name steampipe \
   -e AZURE_TENANT_ID=00000000-0000-0000-0000-000000000000 \
   -e AZURE_CLIENT_ID=00000000-0000-0000-0000-000000000000 \
   -e AZURE_CLIENT_SECRET=your-client-secret \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -145,7 +145,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$HOME/.kube:/home/steampipe/.kube:ro" \
   -v "$PWD/kubernetes.spc:/home/steampipe/.steampipe/config/kubernetes.spc:ro" \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 docker exec steampipe steampipe plugin install kubernetes
@@ -175,7 +175,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -v "$PWD/github.spc:/home/steampipe/.steampipe/config/github.spc:ro" \
   -e GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 docker exec steampipe steampipe plugin install github
@@ -243,7 +243,7 @@ docker run -d --name steampipe \
   -e STEAMPIPE_MEMORY_MAX_MB=4096 \
   -e STEAMPIPE_PLUGIN_MEMORY_MAX_MB=2048 \
   -e STEAMPIPE_MAX_PARALLEL=20 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -254,7 +254,7 @@ docker run -d --name steampipe \
   --memory=6g --memory-swap=6g \
   -p 9193:9193 \
   -e STEAMPIPE_MEMORY_MAX_MB=4096 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -267,7 +267,7 @@ Steampipe caches query results to avoid redundant API calls. By default the cach
 docker run -d --name steampipe \
   -p 9193:9193 \
   -e STEAMPIPE_CACHE=false \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 # Longer cache TTL for stable data (1 hour)
@@ -275,7 +275,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -e STEAMPIPE_CACHE=true \
   -e STEAMPIPE_CACHE_TTL=3600 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 
 # Short TTL for near-real-time data (30 seconds)
@@ -283,7 +283,7 @@ docker run -d --name steampipe \
   -p 9193:9193 \
   -e STEAMPIPE_CACHE=true \
   -e STEAMPIPE_CACHE_TTL=30 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
@@ -301,7 +301,7 @@ Control how many plugin API calls run concurrently:
 docker run -d --name steampipe \
   -p 9193:9193 \
   -e STEAMPIPE_MAX_PARALLEL=20 \
-  ghcr.io/devops-ia/steampipe:2.4.1 \
+  ghcr.io/devops-ia/steampipe:v2.4.1 \
   steampipe service start --foreground --database-listen network
 ```
 
