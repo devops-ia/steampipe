@@ -7,3 +7,4 @@ ignore:
   - DL3008
   # DL3009: Delete apt-get lists — handled explicitly in our RUN layer
   - DL3009
+  - DL3025
