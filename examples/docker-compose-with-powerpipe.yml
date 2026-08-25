@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   powerpipe:
-    image: ghcr.io/devops-ia/powerpipe:1.5.1
+    image: ghcr.io/devops-ia/powerpipe:v1.5.1
     container_name: powerpipe
     ports:
       - "9033:9033"
