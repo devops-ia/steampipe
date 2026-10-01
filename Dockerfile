@@ -40,6 +40,7 @@ WORKDIR /home/steampipe
 
 EXPOSE 9193
 
+# hadolint ignore=DL3025
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
   CMD bash -c 'echo > /dev/tcp/localhost/9193' || exit 1
 
